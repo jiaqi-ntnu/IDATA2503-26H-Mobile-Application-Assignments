@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 var kColorSchemeDark = ColorScheme.fromSeed(
   brightness: Brightness.dark,
-  seedColor: Color.fromARGB(255, 106, 225, 8),
+  seedColor: Color.fromARGB(255, 255, 81, 0),
 );
 
 var kColorScheme = ColorScheme.fromSeed(
@@ -12,7 +12,7 @@ var kColorScheme = ColorScheme.fromSeed(
 void main() {
   runApp(
     MaterialApp(
-      // themeMode: ThemeMode.dark,
+      themeMode: ThemeMode.light,
       darkTheme: ThemeData.dark().copyWith(
         appBarTheme: AppBarTheme().copyWith(
           backgroundColor: kColorSchemeDark.onPrimaryContainer,

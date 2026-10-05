@@ -7,7 +7,7 @@ final formatter = DateFormat("dd/M/yy");
 
 enum Category { food, travel, leisure, work }
 
-const _categoryIcons = {
+const categoryIcons = {
   Category.food: Icons.lunch_dining,
   Category.travel: Icons.flight_takeoff,
   Category.leisure: Icons.movie,
@@ -33,6 +33,21 @@ class Expense {
   }
 
   IconData? get categoryIcon {
-    return _categoryIcons[category];
+    return categoryIcons[category];
   }
+}
+
+class ExpenseBucket {
+  const new({required this.category, required this.expenses});
+
+  final Category category;
+  final List<Expense> expenses;
+
+  new forCategory(List<Expense> allExpenses, this.category)
+    : expenses = allExpenses
+          .where((expense) => expense.category == category)
+          .toList();
+
+  double get totalExpenses =>
+      expenses.fold(0, (sum, expense) => sum + expense.amount);
 }

@@ -1,3 +1,4 @@
+import 'package:expense_app/widgets/chart/chart.dart';
 import 'package:expense_app/widgets/expenses_list/expenses_list.dart';
 import 'package:expense_app/models/expense.dart';
 import 'package:expense_app/widgets/new_expense.dart';
@@ -59,6 +60,7 @@ class _ExpensesState extends State<Expenses> {
 
   void _openExpenseOverlay() {
     showModalBottomSheet(
+      useSafeArea: true,
       isScrollControlled: true,
       context: context,
       builder: (ctx) => NewExpense(_addExpense),
@@ -68,6 +70,8 @@ class _ExpensesState extends State<Expenses> {
   @override
   Widget build(BuildContext context) {
     Widget _mainContent = Center(child: Text("Expense list is empty."));
+
+    final width = MediaQuery.of(context).size.width;
 
     if (_registeredExpenses.isNotEmpty) {
       _mainContent = ExpensesList(
@@ -83,12 +87,19 @@ class _ExpensesState extends State<Expenses> {
           IconButton(onPressed: _openExpenseOverlay, icon: Icon(Icons.add)),
         ],
       ),
-      body: Column(
-        children: [
-          // Text("The Chart"),
-          Expanded(child: _mainContent),
-        ],
-      ),
+      body: width <= 800
+          ? Column(
+              children: [
+                Chart(expenses: _registeredExpenses),
+                Expanded(child: _mainContent),
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(child: Chart(expenses: _registeredExpenses)),
+                Expanded(child: _mainContent),
+              ],
+            ),
     );
   }
 }
