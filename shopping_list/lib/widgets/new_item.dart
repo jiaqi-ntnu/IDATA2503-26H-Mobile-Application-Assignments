@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:shopping_list/data/categories.dart';
+import 'package:shopping_list/data/database.dart';
 import 'package:shopping_list/models/category.dart';
 import 'package:shopping_list/models/grocery_item.dart';
 
@@ -49,22 +50,17 @@ class _NewItemState extends State<NewItem> {
       });
 
       // Construct Firebase database endpoint for grocery items.
-      final url = Uri.https(
-          'flutter-prep-default-rtdb.firebaseio.com', 'shopping-list.json');
+      final url = Uri.https(databaseHost, 'shopping-list.json');
 
       // Send HTTP POST request with JSON encoded body.
       final response = await http.post(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: json.encode(
-          {
-            'name': _enteredName,
-            'quantity': _enteredQuantity,
-            'category': _selectedCategory.title,
-          },
-        ),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'name': _enteredName,
+          'quantity': _enteredQuantity,
+          'category': _selectedCategory.title,
+        }),
       );
 
       // Firebase returns a JSON payload containing the auto-generated unique ID in the 'name' field.
@@ -90,9 +86,7 @@ class _NewItemState extends State<NewItem> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add a new item'),
-      ),
+      appBar: AppBar(title: const Text('Add a new item')),
       body: Padding(
         padding: const EdgeInsets.all(12),
         child: Form(
@@ -102,9 +96,7 @@ class _NewItemState extends State<NewItem> {
               // Text input field for the grocery item name.
               TextFormField(
                 maxLength: 50,
-                decoration: const InputDecoration(
-                  label: Text('Name'),
-                ),
+                decoration: const InputDecoration(label: Text('Name')),
                 validator: (value) {
                   // Ensure name is non-empty and between 2 and 50 characters long.
                   if (value == null ||
@@ -205,7 +197,7 @@ class _NewItemState extends State<NewItem> {
                             child: CircularProgressIndicator(),
                           )
                         : const Text('Add Item'),
-                  )
+                  ),
                 ],
               ),
             ],

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shopping_list/data/categories.dart';
+import 'package:shopping_list/data/database.dart';
 import 'package:shopping_list/models/category.dart';
 
 import 'package:shopping_list/models/grocery_item.dart';
@@ -20,7 +21,7 @@ class GroceryList extends StatefulWidget {
 
 class _GroceryListState extends State<GroceryList> {
   // Local list of grocery items kept in state for optimistic updates during removal.
-  List<GroceryItem> _groceryItems = [];
+  final List<GroceryItem> _groceryItems = [];
 
   // Future that represents the asynchronous operation of loading items from Firebase.
   // Passed to FutureBuilder in the build method.
@@ -40,8 +41,7 @@ class _GroceryListState extends State<GroceryList> {
   /// Parses the returned JSON into a list of [GroceryItem] instances.
   Future<List<GroceryItem>> _loadItems() async {
     // Construct the Firebase Realtime Database endpoint URL.
-    final url = Uri.https(
-        'flutter-prep-default-rtdb.firebaseio.com', 'shopping-list.json');
+    final url = Uri.https(databaseHost, 'shopping-list.json');
 
     // Send HTTP GET request to retrieve grocery items.
     final response = await http.get(url);
@@ -53,7 +53,7 @@ class _GroceryListState extends State<GroceryList> {
 
     // Firebase returns the string 'null' when the database node is empty.
     if (response.body == 'null') {
-      return [];
+      return _groceryItems;
     }
 
     // Decode the response body into a map of item keys to item data maps.
@@ -63,9 +63,10 @@ class _GroceryListState extends State<GroceryList> {
     // Iterate over each item entry in the database.
     for (final item in listData.entries) {
       // Find the corresponding category object matching the stored category title.
-      final category = categories.entries
+      final Category category = categories.entries
           .firstWhere(
-              (catItem) => catItem.value.title == item.value['category'])
+            (catItem) => catItem.value.title == item.value['category'],
+          )
           .value;
 
       // Construct a GroceryItem and add it to the list.
@@ -78,18 +79,18 @@ class _GroceryListState extends State<GroceryList> {
         ),
       );
     }
-    return loadedItems;
+    return _groceryItems
+      ..clear()
+      ..addAll(loadedItems);
   }
 
   /// Opens the [NewItem] screen to let the user add a new grocery item.
   /// If an item is created, it is appended to the local state.
   void _addItem() async {
     // Navigate to the NewItem screen and await the newly created GroceryItem.
-    final newItem = await Navigator.of(context).push<GroceryItem>(
-      MaterialPageRoute(
-        builder: (ctx) => const NewItem(),
-      ),
-    );
+    final newItem = await Navigator.of(
+      context,
+    ).push<GroceryItem>(MaterialPageRoute(builder: (ctx) => const NewItem()));
 
     // If the user cancelled or navigated back without creating an item, do nothing.
     if (newItem == null) {
@@ -113,8 +114,7 @@ class _GroceryListState extends State<GroceryList> {
     });
 
     // Construct the URL targeting the specific item ID in Firebase.
-    final url = Uri.https('flutter-prep-default-rtdb.firebaseio.com',
-        'shopping-list/${item.id}.json');
+    final url = Uri.https(databaseHost, 'shopping-list/${item.id}.json');
 
     // Send HTTP DELETE request to delete the item from Firebase.
     final response = await http.delete(url);
@@ -135,10 +135,7 @@ class _GroceryListState extends State<GroceryList> {
         title: const Text('Your Groceries'),
         actions: [
           // Button to navigate to the Add Item screen.
-          IconButton(
-            onPressed: _addItem,
-            icon: const Icon(Icons.add),
-          ),
+          IconButton(onPressed: _addItem, icon: const Icon(Icons.add)),
         ],
       ),
       // FutureBuilder listens to the _loadedItems Future and rebuilds UI based on its state.
@@ -152,11 +149,7 @@ class _GroceryListState extends State<GroceryList> {
 
           // Display error message if the fetch failed.
           if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                snapshot.error.toString(),
-              ),
-            );
+            return Center(child: Text(snapshot.error.toString()));
           }
 
           // Display fallback message when there are no items in the database.
@@ -165,25 +158,26 @@ class _GroceryListState extends State<GroceryList> {
           }
 
           // Render the scrollable list of grocery items.
-          return ListView.builder(
-            itemCount: snapshot.data!.length,
-            itemBuilder: (ctx, index) => Dismissible(
-              // Allow user to swipe the item to delete it.
-              onDismissed: (direction) {
-                _removeItem(snapshot.data![index]);
-              },
-              key: ValueKey(snapshot.data![index].id),
-              child: ListTile(
-                title: Text(snapshot.data![index].name),
-                // Colored box visually indicating the grocery item category.
-                leading: Container(
-                  width: 24,
-                  height: 24,
-                  color: snapshot.data![index].category.color,
-                ),
-                // Display the quantity of the item.
-                trailing: Text(
-                  snapshot.data![index].quantity.toString(),
+          return RefreshIndicator(
+            onRefresh: _reload,
+            child: ListView.builder(
+              itemCount: snapshot.data!.length,
+              itemBuilder: (ctx, index) => Dismissible(
+                // Allow user to swipe the item to delete it.
+                onDismissed: (direction) {
+                  _removeItem(snapshot.data![index]);
+                },
+                key: ValueKey(snapshot.data![index].id),
+                child: ListTile(
+                  title: Text(snapshot.data![index].name),
+                  // Colored box visually indicating the grocery item category.
+                  leading: Container(
+                    width: 24,
+                    height: 24,
+                    color: snapshot.data![index].category.color,
+                  ),
+                  // Display the quantity of the item.
+                  trailing: Text(snapshot.data![index].quantity.toString()),
                 ),
               ),
             ),
@@ -191,5 +185,13 @@ class _GroceryListState extends State<GroceryList> {
         },
       ),
     );
+  }
+
+  Future<void> _reload() async{
+    final future = _loadItems();
+    setState(() {
+      _loadedItems = future;
+    });
+    await future;
   }
 }

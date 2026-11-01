@@ -4,7 +4,7 @@ import 'package:shopping_list/models/category.dart';
 
 /// Static map defining the metadata (title and color) for each [Categories] enum value.
 /// This acts as a central lookup source for category details across the app.
-const categories = {
+const Map<Categories, Category> categories = {
   Categories.vegetables: Category(
     'Vegetables',
     Color.fromARGB(255, 0, 255, 128),
