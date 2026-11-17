@@ -5,7 +5,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:http/http.dart' as http;
@@ -53,11 +52,7 @@ class _LocationInputState extends State<LocationInput> {
     var address =
         '${latitude.toStringAsFixed(5)}, ${longitude.toStringAsFixed(5)}';
     try {
-      const channel = MethodChannel('favorite_places/maps_config');
-      final apiKey = await channel.invokeMethod<String>('getApiKey');
-      if (apiKey == null || apiKey.isEmpty) {
-        throw StateError('Maps key is missing');
-      }
+      const apiKey = 'AIzaSyB01e_SQKc4uL5iFNFfmBzn5eRMJq3ruvI';
       final url = Uri.https('maps.googleapis.com', '/maps/api/geocode/json', {
         'latlng': '$latitude,$longitude',
         'key': apiKey,
@@ -96,15 +91,6 @@ class _LocationInputState extends State<LocationInput> {
     if (_isGettingLocation) return;
     setState(() => _isGettingLocation = true);
     try {
-      const channel = MethodChannel('favorite_places/maps_config');
-      final apiKey = await channel.invokeMethod<String>('getApiKey');
-      if (apiKey == null || apiKey.isEmpty) {
-        throw StateError('Maps key is missing');
-      }
-      final url = Uri.https('maps.googleapis.com', '/maps/api/geocode/json', {
-        'latlng': '$latitude,$longitude',
-        'key': apiKey,
-      });
       Location location = Location();
 
       bool serviceEnabled;
