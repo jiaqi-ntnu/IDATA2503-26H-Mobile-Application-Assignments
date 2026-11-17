@@ -96,6 +96,15 @@ class _LocationInputState extends State<LocationInput> {
     if (_isGettingLocation) return;
     setState(() => _isGettingLocation = true);
     try {
+      const channel = MethodChannel('favorite_places/maps_config');
+      final apiKey = await channel.invokeMethod<String>('getApiKey');
+      if (apiKey == null || apiKey.isEmpty) {
+        throw StateError('Maps key is missing');
+      }
+      final url = Uri.https('maps.googleapis.com', '/maps/api/geocode/json', {
+        'latlng': '$latitude,$longitude',
+        'key': apiKey,
+      });
       Location location = Location();
 
       bool serviceEnabled;
